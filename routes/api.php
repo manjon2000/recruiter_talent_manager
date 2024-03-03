@@ -5,7 +5,6 @@ use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,13 +25,17 @@ Route::get('user-and-roles', function(Response $response) {
     return response()->json($user);
 });
 
+/**
+ * TAGS
+ */
+
 Route::post('/tags/create', function (Request $request, Response $response) {
 
     if($request->name) {
         $findTag = tag::where('name', $request->name)->get();
 
         if(count($findTag) > 0) {
-            return response()->json(['message' => 'Tag duplicate'], 409);
+            abort(409, 'Tag duplicate');
         }
 
         $createTag = new Tag([
@@ -40,19 +43,17 @@ Route::post('/tags/create', function (Request $request, Response $response) {
         ]);
 
         if($createTag->save()) {
-            return response()->json(['message' => 'Tag created correctly'], 201);
+            abort(201, 'Tag created correctly');
         }
-
-        return response()->json(['message' => 'The tag could not be created'], 404);
+        abort(404, 'The tag could not be created');
     }
-
-    return response()->json(['message' => 'Not found name'], 404);
+    abort(404, 'Not found name');
 });
 
 Route::put('/tags/edit/{id}', function (int $id, Request $request, Response $response) {
 
     if(!is_numeric($id)) {
-        return response()->json(['message' => 'Is not number'], 409);
+        abort(409);
     }
 
     if($request->name) {
@@ -62,9 +63,28 @@ Route::put('/tags/edit/{id}', function (int $id, Request $request, Response $res
             'name' => $request->name
         ]);
 
-        return response()->json(['content' => $findTag]);
+        abort(201);
     }
 
-    return response()->json([], 409);
-
+    abort(409);
 });
+
+Route::delete('/tags/delete/{id}', function (int $id, Request $request, Response $response) {
+
+    if(!is_numeric($id)) {
+        abort(409);
+    }
+
+    $findTag = Tag::find($id);
+
+    if($findTag) {
+        $findTag->delete();
+        return response()->json(['message' => 'Tag deleted'], 201);
+    }
+
+    abort(409);
+});
+
+/**
+ * TAGS
+ */
