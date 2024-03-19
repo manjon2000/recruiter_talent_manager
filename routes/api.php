@@ -4,7 +4,10 @@ use App\Models\User;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Validation\ValidationException;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -16,26 +19,75 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-Route::get('user-and-roles', function(Response $response) {
+Route::middleware('auth:sanctum')->get('/user', function(Response $response) {
     $user = User::with(['userRoles','userRoles.role'])->where('id', 2)->get();
     return response()->json($user);
+});
+
+/**
+ * USER
+ */
+
+Route::post('/register', function (Request $request) {
+    try {
+        $request->validate([
+            'name'      => 'required|string|min:3',
+            'last_name' => 'required|string|min:3',
+            'email'     => 'required|email|unique:users,email',
+            'password'  => 'required|string'
+        ]);
+
+        $user = new User($request->all());
+        $user->save();
+
+        return response()->json([
+            'token' => $user->createToken('personal_token')->plainTextToken,
+        ], 201);
+
+    } catch (ValidationException $errors) {
+        return response()->json([
+            'errors' => $errors->validator->getMessageBag()->toArray()
+        ], 422);
+    }
+});
+
+Route::post('/login', function (Request $request) {
+    try {
+
+        $request->validate([
+            'email'     => 'required|email',
+            'password'  => 'required'
+        ]);
+
+        $findUser = User::where('email', $request->email)->first();
+
+        $validatePassword = Hash::check($request->password, $findUser->password);
+
+        if($validatePassword) {
+            return response()->json($findUser);
+        }
+        if(!$validatePassword) {
+            return response()->json(['message' => 'Credential incorrect'], 401);
+        }
+
+    } catch (ValidationException $errors) {
+        return response()->json([
+            'errors' => $errors->validator->getMessageBag()->toArray()
+        ], 422);
+    }
 });
 
 /**
  * TAGS
  */
 
-Route::post('/tags/create', function (Request $request, Response $response) {
+Route::post('/tags/create', function (Request $request) {
 
     if($request->name) {
         $findTag = tag::where('name', $request->name)->get();
 
         if(count($findTag) > 0) {
-            abort(409, 'Tag duplicate');
+            return response()->json(['message' => 'Tag duplicate'], 409);
         }
 
         $createTag = new Tag([
@@ -43,17 +95,18 @@ Route::post('/tags/create', function (Request $request, Response $response) {
         ]);
 
         if($createTag->save()) {
-            abort(201, 'Tag created correctly');
+            return response()->noContent(201);
         }
-        abort(404, 'The tag could not be created');
+
+        return response()->json(['message' => 'The tag could not be created'], 404);
     }
-    abort(404, 'Not found name');
+    return response()->json(['message' => 'Not found name'], 404);
 });
 
-Route::put('/tags/edit/{id}', function (int $id, Request $request, Response $response) {
+Route::put('/tags/edit/{id}', function (int $id, Request $request) {
 
     if(!is_numeric($id)) {
-        abort(409);
+        return response()->noContent(409);
     }
 
     if($request->name) {
@@ -63,16 +116,16 @@ Route::put('/tags/edit/{id}', function (int $id, Request $request, Response $res
             'name' => $request->name
         ]);
 
-        abort(201);
+        return response()->noContent(201);
     }
 
-    abort(409);
+    return response()->noContent(409);
 });
 
-Route::delete('/tags/delete/{id}', function (int $id, Request $request, Response $response) {
+Route::delete('/tags/delete/{id}', function (int $id, Request $request) {
 
     if(!is_numeric($id)) {
-        abort(409);
+        return response()->json(['message' => 'ID incorrect'], 409);
     }
 
     $findTag = Tag::find($id);
@@ -82,9 +135,5 @@ Route::delete('/tags/delete/{id}', function (int $id, Request $request, Response
         return response()->json(['message' => 'Tag deleted'], 201);
     }
 
-    abort(409);
+    return response()->json(['message' => 'Unable to proceed with deletion'], 409);
 });
-
-/**
- * TAGS
- */
