@@ -4,6 +4,7 @@ use App\Models\User;
 use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
@@ -19,13 +20,9 @@ use Illuminate\Validation\ValidationException;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function(Response $response) {
-    $user = User::with(['userRoles','userRoles.role'])->where('id', 2)->get();
-    return response()->json($user);
-});
 
 /**
- * USER
+ * Auth
  */
 
 Route::post('/register', function (Request $request) {
@@ -77,63 +74,124 @@ Route::post('/login', function (Request $request) {
     }
 });
 
+
 /**
- * TAGS
+ * Route Group generic
  */
 
-Route::post('/tags/create', function (Request $request) {
+Route::middleware('auth:sanctum')->group(function () {
 
-    if($request->name) {
-        $findTag = tag::where('name', $request->name)->get();
+    /**
+     * Get logged in user data
+     */
+    Route::get('/user', function(Response $response) {
+        $user = User::where('id', Auth::user()->id)->first();
+        return response()->json($user);
+    });
 
-        if(count($findTag) > 0) {
-            return response()->json(['message' => 'Tag duplicate'], 409);
-        }
+    /**
+     * TAGS
+     */
+    Route::prefix('/tags')->group(function () {
+        Route::post('/create', function (Request $request) {
 
-        $createTag = new Tag([
-            'name' => $request->name
-        ]);
+            if($request->name) {
+                $findTag = tag::where('name', $request->name)->get();
 
-        if($createTag->save()) {
-            return response()->noContent(201);
-        }
+                if(count($findTag) > 0) {
+                    return response()->json(['message' => 'Tag duplicate'], 409);
+                }
 
-        return response()->json(['message' => 'The tag could not be created'], 404);
-    }
-    return response()->json(['message' => 'Not found name'], 404);
-});
+                $createTag = new Tag([
+                    'name' => $request->name
+                ]);
 
-Route::put('/tags/edit/{id}', function (int $id, Request $request) {
+                if($createTag->save()) {
+                    return response()->noContent(201);
+                }
 
-    if(!is_numeric($id)) {
-        return response()->noContent(409);
-    }
+                return response()->json(['message' => 'The tag could not be created'], 404);
+            }
+            return response()->json(['message' => 'Not found name'], 404);
+        });
+        Route::put('/edit/{id}', function (int $id, Request $request) {
 
-    if($request->name) {
-        $findTag = Tag::find($id);
+            if(!is_numeric($id)) {
+                return response()->noContent(409);
+            }
 
-        $findTag->update([
-            'name' => $request->name
-        ]);
+            if($request->name) {
+                $findTag = Tag::find($id);
 
-        return response()->noContent(201);
-    }
+                $findTag->update([
+                    'name' => $request->name
+                ]);
 
-    return response()->noContent(409);
-});
+                return response()->noContent(201);
+            }
 
-Route::delete('/tags/delete/{id}', function (int $id, Request $request) {
+            return response()->noContent(409);
+        });
+        Route::delete('/delete/{id}', function (int $id, Request $request) {
 
-    if(!is_numeric($id)) {
-        return response()->json(['message' => 'ID incorrect'], 409);
-    }
+            if(!is_numeric($id)) {
+                return response()->json(['message' => 'ID incorrect'], 409);
+            }
 
-    $findTag = Tag::find($id);
+            $findTag = Tag::find($id);
 
-    if($findTag) {
-        $findTag->delete();
-        return response()->json(['message' => 'Tag deleted'], 201);
-    }
+            if($findTag) {
+                $findTag->delete();
+                return response()->json(['message' => 'Tag deleted'], 201);
+            }
 
-    return response()->json(['message' => 'Unable to proceed with deletion'], 409);
+            return response()->json(['message' => 'Unable to proceed with deletion'], 409);
+        });
+    });
+
+    /**
+     * CANDIDATES
+     */
+    Route::prefix('/candidates')->group(function () {
+
+        // @TODO
+        Route::prefix('/studies')->group(function () {
+            Route::get('/all', function (Request $request) {});
+            Route::put('/edit/{id}', function (int $id, Request $request) {});
+            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+        });
+
+        // @TODO
+        Route::prefix('/description')->group(function() {
+            Route::post('/create', function (Request $request) {});
+            Route::put('/edit/{id}', function (int $id, Request $request) {});
+            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+        });
+
+        // @TODO
+        Route::prefix('/experience')->group(function() {
+            Route::post('/create', function (Request $request) {});
+            Route::put('/edit/{id}', function (int $id, Request $request) {});
+            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+        });
+
+        // @TODO
+        Route::prefix('/skills')->group(function() {
+            Route::post('/create', function (Request $request) {});
+            Route::put('/edit/{id}', function (int $id, Request $request) {});
+            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+        });
+
+    });
+
+    /**
+     * JOBS
+     */
+    Route::prefix('/jobs')->group(function () {
+        // @TODO
+        Route::get('/all', function () {});
+        Route::post('/create', function () {});
+        Route::put('/edit/{id}', function (int $id, Request $request) {});
+        Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+    });
 });
