@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Testing\Fluent\Concerns\Has;
 use Laravel\Sanctum\HasApiTokens;
 
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -24,6 +25,10 @@ class User extends Authenticatable
         'last_name',
         'email',
         'password',
+    ];
+
+    protected $with = [
+        'userRoles'
     ];
 
     /**
