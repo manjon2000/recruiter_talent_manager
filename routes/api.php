@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use App\Models\Tag;
+use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +37,12 @@ Route::post('/register', function (Request $request) {
 
         $user = new User($request->all());
         $user->save();
+
+        $userRole = new UserRole([
+            'role_id'   => 3,
+            'user_id'   => $user->id
+        ]);
+        $userRole->save();
 
         return response()->json([
             'token' => $user->createToken('personal_token')->plainTextToken,
