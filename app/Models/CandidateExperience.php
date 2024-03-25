@@ -4,21 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class Tag extends Model
+class CandidateExperience extends Model
 {
     use HasFactory;
 
-    protected $table = 'tags';
+    protected $table = 'candidates_experiences';
 
     protected $fillable = [
+        'user_id',
         'name',
+        'description',
+        'start_date',
+        'finish_date'
     ];
 
     protected $hidden = [
-        'id',
         'created_at',
         'updated_at'
     ];

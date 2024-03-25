@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CandidateController;
 use App\Models\User;
 use App\Models\Tag;
 use App\Models\UserRole;
@@ -10,22 +11,16 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+/**
+ * @Auth
+ */
 
 
 /**
- * Auth
+ * @TODO
+ * - Created Controller
+ * - Created Custom Request for validated
  */
-
 Route::post('/register', function (Request $request) {
     try {
         $request->validate([
@@ -55,6 +50,12 @@ Route::post('/register', function (Request $request) {
     }
 });
 
+/**
+ * @TODO
+ * - Created Controller
+ * - Created Custom Request for validated
+ */
+
 Route::post('/login', function (Request $request) {
     try {
 
@@ -62,13 +63,15 @@ Route::post('/login', function (Request $request) {
             'email'     => 'required|email',
             'password'  => 'required'
         ]);
-
         $findUser = User::where('email', $request->email)->first();
 
         $validatePassword = Hash::check($request->password, $findUser->password);
 
         if($validatePassword) {
-            return response()->json($findUser);
+            return response()->json([
+                'token' => $findUser->createToken('personal_token')->plainTextToken,
+                'user'  => $findUser
+            ], 201);
         }
         if(!$validatePassword) {
             return response()->json(['message' => 'Credential incorrect'], 401);
@@ -100,6 +103,12 @@ Route::middleware('auth:sanctum')->group(function () {
      * TAGS
      */
     Route::prefix('/tags')->group(function () {
+
+        /**
+         * @TODO
+         * - Created Controller
+         * - Created Custom Request for validated
+         */
         Route::post('/create', function (Request $request) {
 
             if($request->name) {
@@ -121,6 +130,12 @@ Route::middleware('auth:sanctum')->group(function () {
             }
             return response()->json(['message' => 'Not found name'], 404);
         });
+
+        /**
+         * @TODO
+         * - Created Controller
+         * - Created Custom Request for validated
+         */
         Route::put('/edit/{id}', function (int $id, Request $request) {
 
             if(!is_numeric($id)) {
@@ -139,6 +154,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
             return response()->noContent(409);
         });
+
+        /**
+         * @TODO
+         * - Created Controller
+         * - Created Custom Request for validated
+         */
         Route::delete('/delete/{id}', function (int $id, Request $request) {
 
             if(!is_numeric($id)) {
@@ -160,42 +181,40 @@ Route::middleware('auth:sanctum')->group(function () {
      * CANDIDATES
      */
     Route::prefix('/candidates')->group(function () {
-
-        // @TODO
         Route::prefix('/studies')->group(function () {
-            Route::get('/all', function (Request $request) {});
-            Route::put('/edit/{id}', function (int $id, Request $request) {});
-            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+            Route::get('/all', [CandidateController::class, 'candidateStudyAll']);
+            Route::post('/create',  [CandidateController::class, 'candidateStudyCreated']);
+            Route::put('/edit/{id}',[CandidateController::class, 'candidateStudyEdited']);
+            Route::delete('/delete/{id}',[CandidateController::class, 'candidateStudyDeleted']);
         });
-
-        // @TODO
         Route::prefix('/description')->group(function() {
-            Route::post('/create', function (Request $request) {});
-            Route::put('/edit/{id}', function (int $id, Request $request) {});
-            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+            Route::post('/create', [CandidateController::class, 'candidateDescriptionCreated']);
+            Route::put('/edit/{id}', [CandidateController::class, 'candidateDescriptionEdited']);
+            Route::delete('/deleted/{id}', [CandidateController::class, 'candidateDescriptionDeleted']);
         });
-
-        // @TODO
         Route::prefix('/experience')->group(function() {
-            Route::post('/create', function (Request $request) {});
-            Route::put('/edit/{id}', function (int $id, Request $request) {});
-            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+            Route::get('/all',[CandidateController::class, 'candidateExperienceAll']);
+            Route::post('/create',[CandidateController::class, 'candidateExperienceCreated']);
+            Route::put('/edit/{id}',[CandidateController::class, 'candidateExperienceEdited']);
+            Route::delete('/deleted/{id}',[CandidateController::class, 'candidateExperienceDeleted']);
         });
-
-        // @TODO
         Route::prefix('/skills')->group(function() {
-            Route::post('/create', function (Request $request) {});
-            Route::put('/edit/{id}', function (int $id, Request $request) {});
-            Route::delete('/deleted/{id}', function (int $id, Request $request) {});
+            Route::get('/all',[CandidateController::class, 'candidateSkillAll']);
+            Route::post('/create',[CandidateController::class, 'candidateSkillCreated']);
+            Route::delete('/deleted/{id}',[CandidateController::class, 'candidateSkillDeleted']);
         });
-
     });
 
     /**
      * JOBS
      */
     Route::prefix('/jobs')->group(function () {
-        // @TODO
+
+        /**
+         * @TODO
+         * - Created Controller
+         * - Created Custom Request for validated
+         */
         Route::get('/all', function () {});
         Route::post('/create', function () {});
         Route::put('/edit/{id}', function (int $id, Request $request) {});

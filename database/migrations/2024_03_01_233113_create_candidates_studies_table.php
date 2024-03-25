@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreign('multimedia_id')->references('id')->on('multimedia')->cascadeOnDelete();
             $table->string('name');
             $table->string('description')->nullable();
-            $table->timestamp('start_date')->nullable();
-            $table->timestamp('finish_date')->nullable();
+            $table->dateTimeTz('start_date', precision: 0)->nullable();
+            $table->dateTimeTz('finish_date', precision: 0)->nullable();
             $table->timestamps();
         });
     }

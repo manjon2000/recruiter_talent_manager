@@ -3,6 +3,7 @@ $user = \App\Models\User::with(['userRoles' => function($query) {
     $query->where('role_id', 1);
 }, 'userRoles.role'])->get();
 
+$multimedia = \App\Models\Multimedia::create(['name' => 'prueba', 'path' => 'demostracion', 'text_alternative' => 'text', 'mimetype' => 'image/gif']); $multimedia->save();
 
 $user = new \App\Models\User([ "name" => 'albert', "last_name" => 'manjon', "email" => 'admin@admin.es', "password" => '12345678']);
 
